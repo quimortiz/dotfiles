@@ -24,7 +24,7 @@ Plug 'skywind3000/asynctasks.vim'
 
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 
-Plug 'vim-airline/vim-airline'
+" Plug 'vim-airline/vim-airline'
 Plug 'morhetz/gruvbox'
 
 " " Track the engine.
@@ -78,8 +78,8 @@ hi SpellBad cterm=underline
 set ignorecase
 set smartcase
 set incsearch
-set background=dark
-colorscheme gruvbox
+" set background=dark
+" colorscheme gruvbox
 
 let g:asyncrun_open = 6
 
@@ -251,7 +251,9 @@ command! -nargs=0 OR   :call     CocAction('runCommand', 'editor.action.organize
 " Add (Neo)Vim's native statusline support.
 " NOTE: Please see `:h coc-status` for integrations with external plugins that
 " provide custom statusline: lightline.vim, vim-airline.
-set statusline^=%{coc#status()}%{get(b:,'coc_current_function','')}
+
+
+" set statusline^=%{coc#status()}%{get(b:,'coc_current_function','')}
 
 " Mappings for CoCList
 " Show all diagnostics.
@@ -289,4 +291,5 @@ let maplocalleader=","
 
 let g:termdebug_wide=1
 
+set cmdheight=1
 
