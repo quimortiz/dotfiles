@@ -1,0 +1,1 @@
+/home/quim/.config/nvim/init.vim
