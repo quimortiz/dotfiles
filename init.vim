@@ -108,7 +108,10 @@ let g:netrw_browse_split = 0
 " - For Neovim: ~/.local/share/nvim/plugged
 " - Avoid using standard Vim directory names like 'plugin'
 call plug#begin('~/.local/share/nvim/plugged')
+Plug 'EdenEast/nightfox.nvim'
+Plug 'rhysd/vim-grammarous'
 
+Plug 'karoliskoncevicius/vim-sendtowindow'
 Plug 'neovim/nvim-lspconfig'
 Plug 'hrsh7th/cmp-nvim-lsp'
 Plug 'hrsh7th/cmp-buffer'
@@ -134,6 +137,8 @@ Plug 'quimortiz/vim-toggle'
 
 Plug 'nvim-lua/plenary.nvim'
 Plug 'nvim-telescope/telescope.nvim'
+Plug 'nvim-telescope/telescope-rg.nvim'
+Plug 'nvim-telescope/telescope-fzf-native.nvim', { 'do': 'make' }
 
 Plug 'neovim/nvim-lspconfig'
 
@@ -177,6 +182,12 @@ Plug 'junegunn/goyo.vim'
 Plug 'tell-k/vim-autopep8'
 
 
+Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
+Plug 'ThePrimeagen/refactoring.nvim'
+
+
+
+
 " Initialize plugin system
 call plug#end()
 
@@ -188,8 +199,10 @@ set termguicolors
 " colorscheme night_owl_light
 
 " Dark scheme
-colorscheme falcon
-set background=dark
+" colorscheme falcon
+" set background=dark
+
+colorscheme nightfox
 
 " Show character column
 set colorcolumn=80
@@ -212,6 +225,8 @@ highlight Blamer guifg=darkorange
 
 let $INIT="/home/quim/.config/nvim/init.vim"
 
+" Git
+nnoremap <leader>gv :vertical Gdiffsplit
 
 " Telescope
 " Find files using Telescope command-line sugar.
@@ -221,6 +236,12 @@ nnoremap <leader>fs <cmd>Telescope grep_string<cr>
 nnoremap <leader>fb <cmd>Telescope buffers<cr>
 nnoremap <leader>fh <cmd>Telescope help_tags<cr>
 nnoremap <leader>ft <cmd>Telescope tags<cr>
+nnoremap <leader>fr <cmd>Telescope resume<cr>
+nnoremap <leader>fl <cmd> Telescope lsp_document_symbols<cr>
+
+
+
+nnoremap <leader>fa :lua require("telescope").extensions.live_grep_raw.live_grep_raw()<cr>
 
 
 nnoremap <leader>ht :lua require("harpoon.ui").toggle_quick_menu()<cr>
@@ -253,9 +274,11 @@ let g:asyncrun_open = 6
 
 autocmd FileType python          nnoremap <buffer> mk :AsyncRun cd %:h && python3 %:t<cr>
 autocmd FileType cpp          nnoremap <buffer>  mk :AsyncRun cd %:h && make -j4<cr>
+autocmd FileType cpp          nnoremap <buffer>  mb :AsyncRun cd build && make -j4<cr>
 autocmd FileType cpp          nnoremap <buffer>  mkr :AsyncRun cd %:h && make -j4 && ./x.exe<cr>
-autocmd FileType tex nnoremap <buffer>  mk :AsyncRun! latexmk -f -pdf main.tex <cr>
-autocmd FileType raig nnoremap <buffer>  mk :AsyncRun! bash /home/quim/stg/erez/lgp-pddl/viewg.sh  %:p <cr>
+" autocmd FileType tex nnoremap <buffer>  mk :AsyncRun! latexmk -f -pdf main.tex <cr>
+autocmd FileType tex nnoremap <buffer>  mk :VimtexCompileSS<cr>
+autocmd FileType raig nnoremap <buffer>  mk :AsyncRun! ./visualize.sh  %:p <cr>
 
 
 
@@ -315,7 +338,7 @@ xmap        S   <Plug>(vsnip-cut-text)
 
 autocmd FileType cpp setlocal commentstring=//\ %s
 autocmd BufNewFile,BufRead *.g set filetype=raig
-au BufReadPost *.g set syntax=bash
+au BufNewFile,BufReadPost *.g set syntax=bash
 autocmd FileType raig setlocal commentstring=#\ %s
 
 
@@ -348,14 +371,28 @@ autocmd FileType raig setlocal commentstring=#\ %s
 
 let g:autopep8_ignore="E402"
 
+let g:autopep8_max_line_length=79
+" add more aggressive options
+let g:autopep8_aggressive=1 
+
+
+
+" search for the current word in the alternate file
+map <leader>gg *:A<cr>gg n
+nnoremap <expr> <silent> <F3>   (&diff ? "]c" : ":cnext\<CR>")
+nnoremap <expr> <silent> <S-F3> (&diff ? "[c" : ":cprev\<CR>")
+
+
+
+
 
 lua << EOF
 
 
 
 
-
 require('telescope').setup{ defaults = { file_ignore_patterns = {"tags"} } } 
+require('telescope').load_extension('fzf')
 
 local nvim_lsp = require('lspconfig')
 
@@ -451,7 +488,7 @@ require'lspconfig'.sumneko_lua.setup {
 
 -- Use a loop to conveniently call 'setup' on multiple servers and
 -- map buffer local keybindings when the language server attaches
-local servers = {  'clangd' , 'pyright', 'rust_analyzer', 'tsserver', 'bashls' }
+local servers = {  'clangd' , 'pyright', 'rust_analyzer', 'tsserver', 'bashls', 'texlab' }
 for _, lsp in ipairs(servers) do
   nvim_lsp[lsp].setup {
     on_attach = on_attach,
@@ -588,6 +625,28 @@ local quimsnip = require('snippets')
 
   -- nvim-tree
   -- require'nvim-tree'.setup()
+
+require('refactoring').setup({})
+
+vim.api.nvim_set_keymap("v", "<Leader>re", [[ <Esc><Cmd>lua require('refactoring').refactor('Extract Function')<CR>]], {noremap = true, silent = true, expr = false})
+vim.api.nvim_set_keymap("v", "<Leader>rf", [[ <Esc><Cmd>lua require('refactoring').refactor('Extract Function To File')<CR>]], {noremap = true, silent = true, expr = false})
+vim.api.nvim_set_keymap("v", "<Leader>rv", [[ <Esc><Cmd>lua require('refactoring').refactor('Extract Variable')<CR>]], {noremap = true, silent = true, expr = false})
+vim.api.nvim_set_keymap("v", "<Leader>ri", [[ <Esc><Cmd>lua require('refactoring').refactor('Inline Variable')<CR>]], {noremap = true, silent = true, expr = false})
+
+-- You can also use below = true here to to change the position of the printf
+-- statement (or set two remaps for either one). This remap must be made in normal mode.
+vim.api.nvim_set_keymap(
+	"n",
+	"<leader>rrp",
+	":lua require('refactoring').debug.printf({below = false})<CR>",
+	{ noremap = true }
+)
+
+-- Print var: this remap should be made in visual mode
+vim.api.nvim_set_keymap("v", "<leader>rrv", ":lua require('refactoring').debug.print_var({})<CR>", { noremap = true })
+
+-- Cleanup function: this remap should be made in normal mode
+vim.api.nvim_set_keymap("n", "<leader>rrcc", ":lua require('refactoring').debug.cleanup({})<CR>", { noremap = true })
 
 
 
